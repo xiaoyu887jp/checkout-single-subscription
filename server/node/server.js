@@ -18,7 +18,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY, {
   }
 });
 
-app.use(express.static(process.env.STATIC_DIR));
+//app.use(express.static(process.env.STATIC_DIR));
 app.use(express.urlencoded({ extended: true }));
 app.use(
   express.json({
