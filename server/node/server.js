@@ -32,10 +32,10 @@ app.use(
   })
 );
 
-app.get("/", (req, res) => {
-  const filePath = path.resolve(process.env.STATIC_DIR + "/index.html");
-  res.sendFile(filePath);
-});
+//app.get("/", (req, res) => {
+ // const filePath = path.resolve(process.env.STATIC_DIR + "/index.html");
+ // res.sendFile(filePath);
+//});
 
 // Fetch the Checkout Session to display the JSON result on the success page
 app.get("/checkout-session", async (req, res) => {
