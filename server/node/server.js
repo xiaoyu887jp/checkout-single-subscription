@@ -2,6 +2,22 @@ const express = require("express");
 const app = express();
 const path = require('path');
 
+// 明确添加 CORS 支持跨域
+const cors = require('cors');
+const allowedOrigins = ['https://saygo-translator.carrd.co'];
+
+app.use(cors({
+  origin: function(origin, callback){
+    if(!origin || allowedOrigins.indexOf(origin) !== -1){
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: "GET, POST, OPTIONS",
+  credentials: true,
+}));
+
 // Copy the .env.example in the root into a .env file in this folder
 const envFilePath = path.resolve(__dirname, './.env');
 const env = require("dotenv").config({ path: envFilePath });
