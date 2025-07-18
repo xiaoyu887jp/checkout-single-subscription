@@ -54,48 +54,45 @@ app.use(
 //});
 
 // Fetch the Checkout Session to display the JSON result on the success page
-app.get("/checkout-session", async (req, res) => {
-  const { sessionId } = req.query;
-  const session = await stripe.checkout.sessions.retrieve(sessionId);
-  res.send(session);
-});
-
 app.post("/create-checkout-session", async (req, res) => {
   const domainURL = process.env.DOMAIN;
-  const { priceId } = req.body;
 
-  // Create new Checkout Session for the order
-  // Other optional params include:
-  // [billing_address_collection] - to display billing address details on the page
-  // [customer] - if you have an existing Stripe Customer ID
-  // [customer_email] - lets you prefill the email input in the form
-  // [automatic_tax] - to automatically calculate sales tax, VAT and GST in the checkout page
-  // For full details see https://stripe.com/docs/api/checkout/sessions/create
+  // 从前端获取用户选择的方案 plan，例如 Starter、Basic 等。
+  const { plan, line_id, group_id } = req.body;
+
+  const priceIdMap = {
+    'Starter': process.env.PRICE_ID_STARTER,
+    'Basic': process.env.PRICE_ID_BASIC,
+    'Pro': process.env.PRICE_ID_PRO,
+    'Expert': process.env.PRICE_ID_EXPERT
+  };
+
+  const selectedPriceId = priceIdMap[plan];
+
+  if (!selectedPriceId) {
+    return res.status(400).json({ error: 'Invalid or missing plan parameter.' });
+  }
+
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       line_items: [
         {
-          price: priceId,
+          price: selectedPriceId, // 这里确保后端正确选择价格
           quantity: 1,
         },
       ],
-      // ?session_id={CHECKOUT_SESSION_ID} means the redirect will have the session ID set as a query param
+      metadata: { line_id, group_id, plan }, // 加入 metadata
       success_url: `${domainURL}/success.html?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${domainURL}/canceled.html`,
-      // automatic_tax: { enabled: true }
     });
 
-    return res.redirect(303, session.url);
+    res.json({ url: session.url }); // 返回付款链接给前端
   } catch (e) {
-    res.status(400);
-    return res.send({
-      error: {
-        message: e.message,
-      }
-    });
+    res.status(400).send({ error: { message: e.message } });
   }
 });
+
 
 app.get("/config", (req, res) => {
   res.send({
