@@ -18,6 +18,9 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2020-08-27',
 });
 
+const sqlite3 = require('sqlite3').verbose();
+const db = new sqlite3.Database('/var/data/data.db');
+
 app.use(express.json({
   verify: function (req, res, buf) {
     if (req.originalUrl.startsWith("/webhook")) {
