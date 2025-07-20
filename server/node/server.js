@@ -19,7 +19,14 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY, {
 });
 
 const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('/var/data/data.db');
+const db = new sqlite3.Database('/opt/render/project/data/data.db', (err) => {
+  if (err) {
+    console.error('Database opening error:', err.message);
+  } else {
+    console.log('✅ Connected to SQLite database.');
+  }
+});
+
 
 app.use(express.json({
   verify: function (req, res, buf) {
