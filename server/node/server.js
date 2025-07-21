@@ -18,13 +18,19 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2020-08-27',
 });
 
-const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('/var/data/data.db', (err) => {
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
+
+// 测试数据库连接
+pool.connect((err, client, release) => {
   if (err) {
-    console.error('Database opening error:', err.message);
-  } else {
-    console.log('✅ Connected to SQLite database.');
+    return console.error('数据库连接失败:', err.stack);
   }
+  console.log('✅ Connected to PostgreSQL database.');
 });
 
 
