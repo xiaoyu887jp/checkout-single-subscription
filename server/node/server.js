@@ -96,7 +96,19 @@ app.post("/webhook", async (req, res) => {
     const session = event.data.object;
     const { line_id, group_id, plan } = session.metadata;
 
-    await updateQuota(line_id, group_id, plan);
+    try {
+      const client = await pool.connect();
+      const insertQuery = `
+        INSERT INTO users (line_id, group_id, plan)
+        VALUES ($1, $2, $3)
+      `;
+
+      await client.query(insertQuery, [line_id, group_id, plan]);
+      client.release();
+      console.log('✅ 数据成功存入 PostgreSQL 数据库');
+    } catch (dbError) {
+      console.error('⚠️ 数据库写入失败:', dbError);
+    }
   }
 
   res.sendStatus(200);
