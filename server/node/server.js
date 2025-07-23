@@ -34,13 +34,52 @@ pool.connect((err, client, release) => {
 });
 
 
-app.use(express.json({
-  verify: function (req, res, buf) {
-    if (req.originalUrl.startsWith("/webhook")) {
-      req.rawBody = buf.toString();
+// 其他 API 保持 JSON 解析
+app.use(express.json());
+
+// Stripe webhook 单独使用 raw 解析
+app.post("/webhook", express.raw({ type: 'application/json' }), async (req, res) => {
+  let event;
+  const signature = req.headers["stripe-signature"];
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+    console.log('✅ Webhook received:', event.type);
+  } catch (err) {
+    console.log(`⚠️ Webhook Error: ${err.message}`);
+    return res.sendStatus(400);
+  }
+
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object;
+    const { line_id, group_id, plan } = session.metadata;
+
+    try {
+      const client = await pool.connect();
+      const insertQuery = `
+        INSERT INTO users (line_id, group_id, plan)
+        VALUES ($1, $2, $3)
+      `;
+
+      await client.query(insertQuery, [line_id, group_id, plan]);
+      client.release();
+      console.log('✅ 数据成功存入 PostgreSQL 数据库');
+
+      // 更新额度
+      await updateQuota(line_id, group_id, plan);
+
+    } catch (dbError) {
+      console.error('⚠️ 数据库写入失败:', dbError);
     }
-  },
-}));
+  }
+
+  res.sendStatus(200);
+});
+
 
 // 创建付款链接
 app.post("/create-checkout-session", async (req, res) => {
