@@ -33,11 +33,7 @@ pool.connect((err, client, release) => {
   console.log('✅ Connected to PostgreSQL database.');
 });
 
-
-// 其他 API 保持 JSON 解析
-app.use(express.json());
-
-// Stripe webhook 单独使用 raw 解析
+// 🚩 Stripe webhook 必须在 express.json 之前注册
 app.post("/webhook", express.raw({ type: 'application/json' }), async (req, res) => {
   let event;
   const signature = req.headers["stripe-signature"];
@@ -50,7 +46,7 @@ app.post("/webhook", express.raw({ type: 'application/json' }), async (req, res)
     );
     console.log('✅ Webhook received:', event.type);
   } catch (err) {
-    console.log(`⚠️ Webhook Error: ${err.message}`);
+    console.error(`⚠️ Webhook Error: ${err.message}`);
     return res.sendStatus(400);
   }
 
@@ -80,6 +76,8 @@ app.post("/webhook", express.raw({ type: 'application/json' }), async (req, res)
   res.sendStatus(200);
 });
 
+// 🚩 其他 API 路由使用 express.json()
+app.use(express.json());
 
 // 创建付款链接
 app.post("/create-checkout-session", async (req, res) => {
@@ -136,10 +134,10 @@ async function updateQuota(line_id, group_id, plan) {
   // ⚠️ 必须明确实现数据库更新逻辑
   // await database.updateUserQuota(line_id, group_id, newQuota, groupLimit);
 
-  console.log(`✅ 用户${line_id}的额度更新为${newQuota}字符，群组限制为${groupLimit}个。`);
+  console.log(`✅ 用户 ${line_id} 的额度更新为 ${newQuota} 字符，群组限制为 ${groupLimit} 个。`);
 }
 
-// Customer Portal入口 (原始程序有的功能，现补充)
+// Customer Portal入口
 app.post('/customer-portal', async (req, res) => {
   const { sessionId } = req.body;
   const checkoutSession = await stripe.checkout.sessions.retrieve(sessionId);
