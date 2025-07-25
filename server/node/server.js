@@ -34,7 +34,8 @@ pool.connect((err, client, release) => {
 });
 
 // 🚩 Stripe webhook 必须在 express.json 之前注册
-app.post("/webhook", express.raw({ type: 'application/json' }), async (req, res) => {
+app.post("/webhook", express.raw({ type: '*/*' }), async (req, res) => {
+
   let event;
   const signature = req.headers["stripe-signature"];
 
