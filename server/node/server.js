@@ -35,6 +35,9 @@ pool.connect((err, client, release) => {
 
 // 🚩 Stripe webhook 必须在 express.json 之前注册
 app.post("/webhook", express.raw({ type: '*/*' }), async (req, res) => {
+  console.log('✅ Headers:', req.headers); // 记录请求头
+  console.log('✅ Body Type:', typeof req.body, 'IsBuffer:', Buffer.isBuffer(req.body)); // 记录请求体类型和是否为Buffer
+  console.log('✅ Raw Body:', req.body.toString()); // 显示原始请求体的内容
 
   let event;
   const signature = req.headers["stripe-signature"];
@@ -76,6 +79,7 @@ app.post("/webhook", express.raw({ type: '*/*' }), async (req, res) => {
 
   res.sendStatus(200);
 });
+
 
 // 🚩 其他 API 路由使用 express.json()
 app.use(express.json());
