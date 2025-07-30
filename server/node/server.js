@@ -109,7 +109,8 @@ app.post("/create-checkout-session", async (req, res) => {
       mode: "subscription",
       line_items: [{ price: selectedPriceId, quantity: 1 }],
       metadata: { line_id, group_id, plan },
-      success_url: `${domainURL}/success.html?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${domainURL}/#success`,
+
       cancel_url: `${domainURL}/canceled.html`,
     });
 
